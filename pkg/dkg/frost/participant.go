@@ -8,6 +8,7 @@
 package frost
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/coinbase/kryptology/internal"
@@ -62,4 +63,16 @@ func NewDkgParticipant(id, threshold uint32, ctx string, curve *curves.Curve, co
 		participantShares: participantShares,
 		ctx:               byte(ctxV),
 	}, nil
+}
+
+func (dp *DkgParticipant) ownShare() (*sharing.ShamirShare, error) {
+	if dp.secretShares == nil {
+		return nil, fmt.Errorf("no shares created")
+	}
+	for _, share := range dp.secretShares {
+		if share.Id == dp.Id {
+			return share, nil
+		}
+	}
+	return nil, fmt.Errorf("own share not found")
 }
