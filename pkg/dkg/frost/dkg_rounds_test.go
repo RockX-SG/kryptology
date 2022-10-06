@@ -22,7 +22,7 @@ var (
 
 // Test dkg round1 works for 2 participants
 func TestDkgRound1Works(t *testing.T) {
-	p1, err := NewDkgParticipant(1, 2, Ctx, testCurve, 2)
+	p1, err := NewDkgParticipant(1, 2, Ctx, testCurve, 1, 2)
 	require.NoError(t, err)
 	bcast, p2psend, err := p1.Round1(nil)
 	require.NoError(t, err)
@@ -36,7 +36,7 @@ func TestDkgRound1Works(t *testing.T) {
 }
 
 func TestDkgRound1RepeatCall(t *testing.T) {
-	p1, err := NewDkgParticipant(1, 2, Ctx, testCurve, 2)
+	p1, err := NewDkgParticipant(1, 2, Ctx, testCurve, 1, 2)
 	require.NoError(t, err)
 	_, _, err = p1.Round1(nil)
 	require.NoError(t, err)
@@ -45,7 +45,7 @@ func TestDkgRound1RepeatCall(t *testing.T) {
 }
 
 func TestDkgRound1BadSecret(t *testing.T) {
-	p1, err := NewDkgParticipant(1, 2, Ctx, testCurve, 2)
+	p1, err := NewDkgParticipant(1, 2, Ctx, testCurve, 1, 2)
 	require.NoError(t, err)
 	// secret == 0
 	secret := []byte{0}
@@ -59,12 +59,12 @@ func TestDkgRound1BadSecret(t *testing.T) {
 
 func PrepareRound2Input(t *testing.T) (*DkgParticipant, *DkgParticipant, *Round1Bcast, *Round1Bcast, Round1P2PSend, Round1P2PSend) {
 	// Prepare round 1 output of 2 participants
-	p1, err := NewDkgParticipant(1, 2, Ctx, testCurve, 2)
+	p1, err := NewDkgParticipant(1, 2, Ctx, testCurve, 1, 2)
 	require.NoError(t, err)
-	require.Equal(t, p1.otherParticipantShares[2].Id, uint32(2))
-	p2, err := NewDkgParticipant(2, 2, Ctx, testCurve, 1)
+	require.Equal(t, p1.participantShares[2].Id, uint32(2))
+	p2, err := NewDkgParticipant(2, 2, Ctx, testCurve, 1, 2)
 	require.NoError(t, err)
-	require.Equal(t, p2.otherParticipantShares[1].Id, uint32(1))
+	require.Equal(t, p2.participantShares[1].Id, uint32(1))
 	bcast1, p2psend1, _ := p1.Round1(nil)
 	bcast2, p2psend2, _ := p2.Round1(nil)
 	return p1, p2, bcast1, bcast2, p2psend1, p2psend2
@@ -89,7 +89,7 @@ func TestDkgRound2Works(t *testing.T) {
 	require.NotNil(t, p1.SkShare)
 	require.NotNil(t, p1.VkShare)
 	require.NotNil(t, p1.VerificationKey)
-	require.NotNil(t, p1.otherParticipantShares)
+	require.NotNil(t, p1.participantShares)
 }
 
 // Test FROST DKG round 2 repeat call

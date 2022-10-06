@@ -16,17 +16,17 @@ import (
 )
 
 type DkgParticipant struct {
-	round                  int
-	Curve                  *curves.Curve
-	otherParticipantShares map[uint32]*dkgParticipantData
-	Id                     uint32
-	SkShare                curves.Scalar
-	VerificationKey        curves.Point
-	VkShare                curves.Point
-	feldman                *sharing.Feldman
-	verifiers              *sharing.FeldmanVerifier
-	secretShares           []*sharing.ShamirShare
-	ctx                    byte
+	round             int
+	Curve             *curves.Curve
+	participantShares map[uint32]*dkgParticipantData
+	Id                uint32
+	SkShare           curves.Scalar
+	VerificationKey   curves.Point
+	VkShare           curves.Point
+	feldman           *sharing.Feldman
+	verifiers         *sharing.FeldmanVerifier
+	secretShares      []*sharing.ShamirShare
+	ctx               byte
 }
 
 type dkgParticipantData struct {
@@ -35,18 +35,18 @@ type dkgParticipantData struct {
 	Verifiers *sharing.FeldmanVerifier
 }
 
-func NewDkgParticipant(id, threshold uint32, ctx string, curve *curves.Curve, otherParticipants ...uint32) (*DkgParticipant, error) {
-	if curve == nil || len(otherParticipants) == 0 {
+func NewDkgParticipant(id, threshold uint32, ctx string, curve *curves.Curve, committee ...uint32) (*DkgParticipant, error) {
+	if curve == nil || len(committee) < 1 {
 		return nil, internal.ErrNilArguments
 	}
-	limit := uint32(len(otherParticipants)) + 1
+	limit := uint32(len(committee))
 	feldman, err := sharing.NewFeldman(threshold, limit, curve)
 	if err != nil {
 		return nil, err
 	}
-	otherParticipantShares := make(map[uint32]*dkgParticipantData, len(otherParticipants))
-	for _, id := range otherParticipants {
-		otherParticipantShares[id] = &dkgParticipantData{
+	participantShares := make(map[uint32]*dkgParticipantData, len(committee))
+	for _, id := range committee {
+		participantShares[id] = &dkgParticipantData{
 			Id: id,
 		}
 	}
@@ -55,11 +55,11 @@ func NewDkgParticipant(id, threshold uint32, ctx string, curve *curves.Curve, ot
 	ctxV, _ := strconv.Atoi(ctx)
 
 	return &DkgParticipant{
-		Id:                     id,
-		round:                  1,
-		Curve:                  curve,
-		feldman:                feldman,
-		otherParticipantShares: otherParticipantShares,
-		ctx:                    byte(ctxV),
+		Id:                id,
+		round:             1,
+		Curve:             curve,
+		feldman:           feldman,
+		participantShares: participantShares,
+		ctx:               byte(ctxV),
 	}, nil
 }

@@ -148,16 +148,16 @@ func createDkgParticipants(thresh, limit int) map[uint32]*dkg.DkgParticipant {
 	curve := curves.BLS12381G1()
 	participants := make(map[uint32]*dkg.DkgParticipant, limit)
 	for i := 1; i <= limit; i++ {
-		otherIds := make([]uint32, limit-1)
+		idsIncludingMe := make([]uint32, limit)
 		idx := 0
-		for j := 1; j <= limit; j++ {
+		for j := 1; j <= limit+1; j++ {
 			if i == j {
 				continue
 			}
-			otherIds[idx] = uint32(j)
+			idsIncludingMe[idx] = uint32(j)
 			idx++
 		}
-		p, err := dkg.NewDkgParticipant(uint32(i), uint32(thresh), Ctx, curve, otherIds...)
+		p, err := dkg.NewDkgParticipant(uint32(i), uint32(thresh), Ctx, curve, idsIncludingMe...)
 		if err != nil {
 			panic(err)
 		}
