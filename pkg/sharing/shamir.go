@@ -73,13 +73,45 @@ func (s Shamir) Split(secret curves.Scalar, reader io.Reader) ([]*ShamirShare, e
 	return shares, nil
 }
 
+func (s Shamir) SplitTo(secret curves.Scalar, reader io.Reader, ids []uint32) ([]*ShamirShare, error) {
+	if secret.IsZero() {
+		return nil, fmt.Errorf("invalid secret")
+	}
+
+	if len(ids) != int(s.limit) {
+		return nil, fmt.Errorf("invalid number of participants")
+	}
+
+	uniqueIds := make(map[uint32]bool)
+	for _, id := range ids {
+		if _, ok := uniqueIds[id]; !ok {
+			uniqueIds[id] = true
+		} else {
+			return nil, fmt.Errorf("ids have to be unique")
+		}
+	}
+
+	shares, _ := s.getPolyAndSharesForIds(secret, reader, ids)
+	return shares, nil
+}
+
 func (s Shamir) getPolyAndShares(secret curves.Scalar, reader io.Reader) ([]*ShamirShare, *Polynomial) {
 	poly := new(Polynomial).Init(secret, s.threshold, reader)
+	ids := make([]uint32, s.limit)
+	for i := range ids {
+		ids = append(ids, uint32(i+1))
+	}
+	shares, _ := s.getPolyAndSharesForIds(secret, reader, ids)
+	return shares, poly
+}
+
+func (s Shamir) getPolyAndSharesForIds(secret curves.Scalar, reader io.Reader, ids []uint32) ([]*ShamirShare, *Polynomial) {
+	poly := new(Polynomial).Init(secret, s.threshold, reader)
 	shares := make([]*ShamirShare, s.limit)
-	for i := range shares {
-		x := s.curve.Scalar.New(i + 1)
+	for i, id := range ids {
+		x := s.curve.Scalar.New(int(id))
 		shares[i] = &ShamirShare{
-			Id:    uint32(i + 1),
+			Id:    id,
 			Value: poly.Evaluate(x).Bytes(),
 		}
 	}

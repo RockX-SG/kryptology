@@ -80,6 +80,24 @@ func (f Feldman) Split(secret curves.Scalar, reader io.Reader) (*FeldmanVerifier
 	return verifier, shares, nil
 }
 
+func (f Feldman) SplitTo(secret curves.Scalar, reader io.Reader, ids []uint32) (*FeldmanVerifier, []*ShamirShare, error) {
+	if secret.IsZero() {
+		return nil, nil, fmt.Errorf("invalid secret")
+	}
+	shamir := &Shamir{
+		threshold: f.Threshold,
+		limit:     f.Limit,
+		curve:     f.Curve,
+	}
+	shares, poly := shamir.getPolyAndSharesForIds(secret, reader, ids)
+	verifier := new(FeldmanVerifier)
+	verifier.Commitments = make([]curves.Point, f.Threshold)
+	for i := range verifier.Commitments {
+		verifier.Commitments[i] = f.Curve.ScalarBaseMult(poly.Coefficients[i])
+	}
+	return verifier, shares, nil
+}
+
 func (f Feldman) LagrangeCoeffs(shares map[uint32]*ShamirShare) (map[uint32]curves.Scalar, error) {
 	shamir := &Shamir{
 		threshold: f.Threshold,

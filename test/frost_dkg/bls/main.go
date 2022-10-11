@@ -144,20 +144,22 @@ func round2(participants map[uint32]*dkg.DkgParticipant,
 	return verificationKey, signingShares
 }
 
+func getIds(limit int) []uint32 {
+	ids := make([]uint32, limit)
+	cnt := 0
+	for j := 1; j <= limit; j++ {
+		ids[cnt] = uint32(j)
+		cnt++
+	}
+	return ids
+}
+
 func createDkgParticipants(thresh, limit int) map[uint32]*dkg.DkgParticipant {
 	curve := curves.BLS12381G1()
 	participants := make(map[uint32]*dkg.DkgParticipant, limit)
 	for i := 1; i <= limit; i++ {
-		otherIds := make([]uint32, limit-1)
-		idx := 0
-		for j := 1; j <= limit; j++ {
-			if i == j {
-				continue
-			}
-			otherIds[idx] = uint32(j)
-			idx++
-		}
-		p, err := dkg.NewDkgParticipant(uint32(i), uint32(thresh), Ctx, curve, otherIds...)
+		ids := getIds(limit)
+		p, err := dkg.NewDkgParticipant(uint32(i), uint32(thresh), Ctx, curve, ids...)
 		if err != nil {
 			panic(err)
 		}

@@ -69,7 +69,7 @@ func (dp *DkgParticipant) Round1(secret []byte) (*Round1Bcast, Round1P2PSend, er
 	}
 
 	// Check number of participants
-	if uint32(len(dp.otherParticipantShares)+1) > dp.feldman.Limit || uint32(len(dp.otherParticipantShares)+1) < dp.feldman.Threshold {
+	if uint32(len(dp.participantShares)) > dp.feldman.Limit || uint32(len(dp.participantShares)) < dp.feldman.Threshold {
 		return nil, nil, fmt.Errorf("length of dp.otherParticipantShares + 1 should be equal to feldman limit")
 	}
 
@@ -94,7 +94,13 @@ func (dp *DkgParticipant) Round1(secret []byte) (*Round1Bcast, Round1P2PSend, er
 	if reflect.TypeOf(dp.feldman.Curve.Scalar) != reflect.TypeOf(dp.Curve.Scalar) {
 		return nil, nil, fmt.Errorf("feldman scalar should have the same type as the dkg participant scalar")
 	}
-	verifiers, shares, err := dp.feldman.Split(s, crand.Reader)
+	ids := make([]uint32, len(dp.participantShares))
+	cnt := 0
+	for _, s := range dp.participantShares {
+		ids[cnt] = s.Id
+		cnt++
+	}
+	verifiers, shares, err := dp.feldman.SplitTo(s, crand.Reader, ids)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -135,9 +141,25 @@ func (dp *DkgParticipant) Round1(secret []byte) (*Round1Bcast, Round1P2PSend, er
 	}
 
 	// Step 7 - P2PSend f_i(j) to each participant Pj and keep (i, f_j(i)) for himself
-	p2pSend := make(Round1P2PSend, len(dp.otherParticipantShares))
-	for id := range dp.otherParticipantShares {
-		p2pSend[id] = shares[id-1]
+	amInCommittee := false
+	for id, _ := range dp.participantShares {
+		if dp.Id == id {
+			amInCommittee = true
+		}
+	}
+	p2pSendCnt := len(dp.participantShares)
+	if !amInCommittee {
+		p2pSendCnt = len(dp.participantShares) - 1
+	}
+	p2pSend := make(Round1P2PSend, p2pSendCnt)
+	for _, share := range shares {
+		if share.Id != dp.Id {
+			p2pSend[share.Id] = share
+		} else {
+			ownShare := dp.Curve.Scalar.Zero().Clone()
+			ownShare.SetBytes(share.Value)
+			dp.SkShare = ownShare
+		}
 	}
 
 	// Update internal state
