@@ -99,7 +99,7 @@ func (s Shamir) getPolyAndShares(secret curves.Scalar, reader io.Reader) ([]*Sha
 	poly := new(Polynomial).Init(secret, s.threshold, reader)
 	ids := make([]uint32, s.limit)
 	for i := range ids {
-		ids = append(ids, uint32(i+1))
+		ids[i] = uint32(i + 1)
 	}
 	shares, _ := s.getPolyAndSharesForIds(secret, reader, ids)
 	return shares, poly
