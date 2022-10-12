@@ -168,3 +168,22 @@ func (dp *DkgParticipant) Round1(secret []byte) (*Round1Bcast, Round1P2PSend, er
 	// return
 	return round1Bcast, p2pSend, nil
 }
+
+// SkipRound1 is used when the participant is the re-sharing share receiver only
+func (dp *DkgParticipant) SkipRound1() error {
+	// Make sure dkg participant is not empty
+	if dp == nil || dp.Curve == nil {
+		return internal.ErrNilArguments
+	}
+
+	// Make sure round number is correct
+	if dp.round != 1 {
+		return internal.ErrInvalidRound
+	}
+
+	// Update internal state
+	dp.round = 2
+
+	// return
+	return nil
+}

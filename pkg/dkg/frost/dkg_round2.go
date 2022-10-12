@@ -29,7 +29,7 @@ func (dp *DkgParticipant) Round2(bcast map[uint32]*Round1Bcast, p2psend map[uint
 	}
 
 	// Check dkg participant has the correct dkg round number
-	if dp.round != 2 && !dp.messagesRecievedFromNonParticipant(bcast) {
+	if dp.round != 2 {
 		return nil, internal.ErrInvalidRound
 	}
 
@@ -165,13 +165,4 @@ func (dp *DkgParticipant) Round2(bcast map[uint32]*Round1Bcast, p2psend map[uint
 		vk,
 		dp.VkShare,
 	}, nil
-}
-
-func (dp *DkgParticipant) messagesRecievedFromNonParticipant(bcast map[uint32]*Round1Bcast) bool {
-	for id := range dp.participantShares {
-		if _, ok := bcast[id]; ok {
-			return false
-		}
-	}
-	return true
 }
