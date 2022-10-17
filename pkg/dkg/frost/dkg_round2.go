@@ -113,15 +113,21 @@ func (dp *DkgParticipant) Round2(bcast map[uint32]*Round1Bcast, p2psend map[uint
 		}
 	}
 
-	ownShare, err := dp.ownShare()
-	if err != nil {
-		return nil, err
+	vk := dp.Curve.NewIdentityPoint()
+	sk := dp.Curve.NewScalar()
+
+	if dp.secretShares != nil {
+		ownShare, err := dp.ownShare()
+		if err != nil {
+			return nil, err
+		}
+		sk, err = dp.Curve.Scalar.SetBytes(ownShare.Value)
+		if err != nil {
+			return nil, err
+		}
+		vk = dp.verifiers.Commitments[0]
 	}
-	sk, err := dp.Curve.Scalar.SetBytes(ownShare.Value)
-	if err != nil {
-		return nil, err
-	}
-	vk := dp.verifiers.Commitments[0]
+
 	// Step 6 - Compute signing key share ski = \sum_{j=1}^n xji
 	for id := range bcast {
 		if id == dp.Id {
